@@ -1,0 +1,21 @@
+[package]
+name = "zrename-cli"
+description = "Bulk file renamer with a live plan and a journalled undo, on the command line"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories = ["command-line-utilities", "filesystem"]
+
+[[bin]]
+name = "zrename"
+path = "src/main.rs"
+
+[dependencies]
+zrename-core = { path = "../zrename-core" }
+anyhow = { workspace = true }
+clap = { version = "4", features = ["derive"] }

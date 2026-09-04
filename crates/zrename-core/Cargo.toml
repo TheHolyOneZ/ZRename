@@ -1,0 +1,38 @@
+[package]
+name = "zrename-core"
+description = "Rule-pipeline bulk rename engine: pure planning, validation, journalled execution"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories = ["filesystem"]
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+regex = { workspace = true }
+walkdir = { workspace = true }
+globset = { workspace = true }
+rayon = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+dirs = { workspace = true }
+toml = { workspace = true }
+deunicode = { workspace = true }
+crc32fast = { workspace = true }
+blake3 = { workspace = true }
+kamadak-exif = { workspace = true }
+lofty = { workspace = true }
+lopdf = { workspace = true }
+csv = { workspace = true }
+tempfile = { workspace = true }
+notify = { workspace = true }
+notify-debouncer-full = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }

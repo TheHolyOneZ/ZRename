@@ -1,0 +1,45 @@
+[workspace]
+members = ["crates/zrename-core", "crates/zrename-cli", "src-tauri"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+authors = ["TheHolyOneZ"]
+repository = "https://github.com/TheHolyOneZ/ZRename"
+homepage = "https://zsync.eu/zrename/"
+documentation = "https://github.com/TheHolyOneZ/ZRename#readme"
+readme = "README.md"
+keywords = ["rename", "batch", "filesystem", "cli", "gui"]
+categories = ["filesystem", "command-line-utilities"]
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+anyhow = "1"
+regex = "1"
+walkdir = "2"
+globset = "0.4"
+rayon = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+dirs = "6"
+toml = "0.8"
+deunicode = "1"
+crc32fast = "1"
+blake3 = "1"
+kamadak-exif = "0.6"
+lofty = "0.25"
+lopdf = "0.44"
+tempfile = "3"
+csv = "1"
+notify = "8"
+notify-debouncer-full = "0.7"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

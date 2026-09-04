@@ -1,0 +1,74 @@
+{
+  "name": "zrename",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Bulk file renamer for Linux and Windows with a live preview and a journalled undo",
+  "keywords": [
+    "bulk-rename",
+    "batch-rename",
+    "file-renamer",
+    "rename",
+    "regex",
+    "exif",
+    "tauri",
+    "rust",
+    "desktop-app",
+    "linux",
+    "windows"
+  ],
+  "homepage": "https://zsync.eu/zrename/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheHolyOneZ/ZRename.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TheHolyOneZ/ZRename/issues"
+  },
+  "author": "TheHolyOneZ",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@tanstack/react-virtual": "^3",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-fs": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-shell": "^2",
+    "clsx": "^2",
+    "lucide-react": "^0.469.0",
+    "motion": "^11",
+    "react": "^19",
+    "react-dom": "^19",
+    "zustand": "^5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4",
+    "jsdom": "^25",
+    "tailwindcss": "^4",
+    "typescript": "~5.8",
+    "vite": "^7",
+    "vitest": "^3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

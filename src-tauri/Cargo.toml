@@ -1,0 +1,37 @@
+[package]
+name = "zrename"
+description = "Bulk file renamer for Linux and Windows with a live preview and a journalled undo"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+
+[[bin]]
+name = "zrename-desktop"
+path = "src/main.rs"
+
+[lib]
+name = "zrename_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+zrename-core = { path = "../crates/zrename-core" }
+
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-opener = "2"
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+regex = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

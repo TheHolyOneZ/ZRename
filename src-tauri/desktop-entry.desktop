@@ -1,0 +1,11 @@
+[Desktop Entry]
+Categories={{categories}}
+{{#if comment}}Comment={{comment}}{{/if}}
+Exec={{exec}} %F
+Icon={{icon}}
+Name={{name}}
+Terminal=false
+Type=Application
+MimeType=inode/directory;
+StartupWMClass={{exec}}
+Keywords=rename;batch;bulk;files;regex;exif;
