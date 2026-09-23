@@ -10,6 +10,7 @@ import { Duplicates } from "./components/Duplicates";
 import { FilterPanel } from "./components/FilterPanel";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { PreviewTable } from "./components/PreviewTable";
+import { ResizeHandles } from "./components/ResizeHandles";
 import { RuleEditor } from "./components/RuleEditor";
 import { RuleStack } from "./components/RuleStack";
 import { Settings } from "./components/Settings";
@@ -147,6 +148,7 @@ export default function App() {
 
   return (
     <div className="h-full flex flex-col" style={{ background: "var(--bg)" }}>
+      <ResizeHandles />
       <Titlebar onAbout={() => setAbout(true)} onSettings={() => setSettingsOpen(true)} subtitle={subtitle} />
       <TopBar onPalette={() => setPalette(true)} />
 

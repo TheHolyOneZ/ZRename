@@ -359,18 +359,39 @@ export function Popover({
       onDismiss();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onDismiss();
+      if (e.key === "Escape") {
+        onDismiss();
+        return;
+      }
+      if ((e.key !== "ArrowDown" && e.key !== "ArrowUp") || e.defaultPrevented) return;
+      const items = Array.from(
+        menuRef.current?.querySelectorAll<HTMLElement>(".zr-menu-item:not(:disabled)") ?? [],
+      );
+      if (items.length === 0) return;
+      e.preventDefault();
+      const at = items.indexOf(document.activeElement as HTMLElement);
+      const next =
+        e.key === "ArrowDown"
+          ? at < 0 ? 0 : Math.min(at + 1, items.length - 1)
+          : at < 0 ? items.length - 1 : Math.max(at - 1, 0);
+      items[next].focus({ preventScroll: true });
+      items[next].scrollIntoView({ block: "nearest" });
+    };
+    const onScroll = (e: Event) => {
+      const t = e.target;
+      if (t instanceof Node && menuRef.current?.contains(t)) return;
+      onDismiss();
     };
 
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKey);
     window.addEventListener("resize", onDismiss);
-    window.addEventListener("scroll", onDismiss, true);
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onDismiss);
-      window.removeEventListener("scroll", onDismiss, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, [open, anchor, onDismiss]);
 

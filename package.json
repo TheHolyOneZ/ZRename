@@ -1,7 +1,7 @@
 {
   "name": "zrename",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Bulk file renamer for Linux and Windows with a live preview and a journalled undo",
   "keywords": [
     "bulk-rename",

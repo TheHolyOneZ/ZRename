@@ -249,7 +249,8 @@ button:focus-visible > .zr-check {
   font-size: 12px;
   line-height: 1.35;
 }
-.zr-menu-item[data-active="true"] { background: var(--row-selected); }
+.zr-menu-item[data-active="true"],
+.zr-menu-item:focus-visible { background: var(--row-selected); outline: none; }
 
 
 .zr-toggle {
@@ -399,3 +400,14 @@ button:disabled { cursor: not-allowed; }
     transition-duration: 0.01ms !important;
   }
 }
+
+
+.zr-resize { position: fixed; z-index: 60; }
+.zr-resize-n  { top: 0; left: 8px; right: 8px; height: 4px; cursor: n-resize; }
+.zr-resize-s  { bottom: 0; left: 8px; right: 8px; height: 4px; cursor: s-resize; }
+.zr-resize-e  { right: 0; top: 8px; bottom: 8px; width: 4px; cursor: e-resize; }
+.zr-resize-w  { left: 0; top: 8px; bottom: 8px; width: 4px; cursor: w-resize; }
+.zr-resize-ne { top: 0; right: 0; width: 8px; height: 8px; cursor: ne-resize; }
+.zr-resize-nw { top: 0; left: 0; width: 8px; height: 8px; cursor: nw-resize; }
+.zr-resize-se { bottom: 0; right: 0; width: 8px; height: 8px; cursor: se-resize; }
+.zr-resize-sw { bottom: 0; left: 0; width: 8px; height: 8px; cursor: sw-resize; }
