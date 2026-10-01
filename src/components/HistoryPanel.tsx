@@ -1,23 +1,67 @@
-import { ChevronDown, ChevronRight, Undo2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Trash2, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { formatBatchTime } from "../lib/format";
 import { useSessionStore } from "../store/useSessionStore";
 
 export function HistoryPanel() {
-  const { history, undo, busy } = useSessionStore();
+  const { history, undo, busy, clearHistory } = useSessionStore();
   const [open, setOpen] = useState(true);
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <div className="shrink-0 flex flex-col min-h-0" style={{ borderTop: "1px solid var(--border)" }}>
-      <button className="w-full flex items-center gap-1 px-3 py-2 shrink-0" onClick={() => setOpen((v) => !v)}>
-        {open ? <ChevronDown size={12} style={{ color: "var(--text-3)" }} /> : <ChevronRight size={12} style={{ color: "var(--text-3)" }} />}
-        <span className="label">History</span>
-        {history.length > 0 && (
-          <span className="text-[10px] tabular-nums" style={{ color: "var(--text-3)" }}>
-            {history.length}
-          </span>
+      <div className="flex items-center pr-2 shrink-0">
+        <button className="flex-1 flex items-center gap-1 px-3 py-2" onClick={() => setOpen((v) => !v)}>
+          {open ? <ChevronDown size={12} style={{ color: "var(--text-3)" }} /> : <ChevronRight size={12} style={{ color: "var(--text-3)" }} />}
+          <span className="label">History</span>
+          {history.length > 0 && (
+            <span className="text-[10px] tabular-nums" style={{ color: "var(--text-3)" }}>
+              {history.length}
+            </span>
+          )}
+        </button>
+        {history.length > 0 && !confirming && (
+          <button
+            className="btn btn-ghost !py-0.5 !px-1.5 text-[11px]"
+            disabled={busy}
+            onClick={() => {
+              setOpen(true);
+              setConfirming(true);
+            }}
+            title="Remove every batch from the history"
+          >
+            <Trash2 size={11} />
+            Clear
+          </button>
         )}
-      </button>
+      </div>
+
+      {confirming && (
+        <div
+          className="mx-2 mb-2 px-2 py-1.5 rounded flex flex-col gap-1.5 text-[11px] leading-snug"
+          style={{ background: "var(--accent-soft)" }}
+        >
+          <span>
+            Clear all {history.length} batch{history.length === 1 ? "" : "es"}? They can no
+            longer be undone afterwards. Your files are not touched.
+          </span>
+          <div className="flex justify-end gap-1.5">
+            <button className="btn !py-0.5 !px-2 text-[11px]" onClick={() => setConfirming(false)}>
+              Cancel
+            </button>
+            <button
+              className="btn btn-accent !py-0.5 !px-2 text-[11px]"
+              disabled={busy}
+              onClick={async () => {
+                setConfirming(false);
+                await clearHistory();
+              }}
+            >
+              Clear history
+            </button>
+          </div>
+        </div>
+      )}
 
       {open && (
         <div className="px-2 pb-2 overflow-y-auto max-h-[180px]">

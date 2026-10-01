@@ -1,3 +1,4 @@
+use super::protect::is_sentinel;
 use super::{split_words, CompiledRule, RenameCtx};
 use crate::error::Result;
 use crate::model::{CaseStyle, Scope};
@@ -44,9 +45,17 @@ fn title(s: &str) -> String {
 
 fn sentence(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
-    for (i, c) in s.chars().enumerate() {
-        if i == 0 {
+    let mut first = true;
+    let mut after_mark = false;
+    for c in s.chars() {
+        if is_sentinel(c) {
+            out.push(c);
+            after_mark |= first;
+        } else if first && after_mark && !c.is_alphanumeric() {
+            out.push(c);
+        } else if first {
             out.extend(c.to_uppercase());
+            first = false;
         } else {
             out.extend(c.to_lowercase());
         }

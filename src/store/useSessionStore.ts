@@ -1,3 +1,4 @@
+import { listen } from "@tauri-apps/api/event";
 import { create } from "zustand";
 import { api, describeError } from "../lib/tauri";
 import { toast } from "./useToastStore";
@@ -20,6 +21,8 @@ interface SessionState {
   history: HistoryEntry[];
   busy: boolean;
   planning: boolean;
+  scanning: boolean;
+  scanned: number;
 
   lastApply: ApplyResult | null;
 
@@ -29,6 +32,8 @@ interface SessionState {
   setScanOptions: (patch: Partial<ScanOptions>) => Promise<void>;
   setConflict: (policy: ConflictPolicy) => Promise<void>;
   rescan: (announce?: boolean) => Promise<void>;
+  closeFolder: () => Promise<void>;
+  clearHistory: () => Promise<void>;
   apply: () => Promise<void>;
   undo: (id: string | null, force?: boolean) => Promise<void>;
   refreshHistory: () => Promise<void>;
@@ -56,9 +61,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   history: [],
   busy: false,
   planning: false,
+  scanning: false,
+  scanned: 0,
   lastApply: null,
 
   init: async () => {
+    listen<number>("zrename://scan-progress", (e) => {
+      if (get().scanning) set({ scanned: e.payload });
+    }).catch(() => {});
     try {
       set({ caps: await api.capabilities() });
       await get().refreshHistory();
@@ -94,7 +104,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   load: async (paths, remember = true) => {
     if (paths.length === 0) return;
-    set({ busy: true });
+    set({ busy: true, scanning: true, scanned: 0 });
     try {
       const scan = await api.scanPaths(paths, get().scanOptions);
       usePreviewStore.getState().reset();
@@ -115,7 +125,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     } catch (e) {
       toast.error("Could not read that folder", describeError(e));
     } finally {
-      set({ busy: false });
+      set({ busy: false, scanning: false });
     }
   },
 
@@ -142,11 +152,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({ scanOptions });
     useSettingsStore.getState().set("lastScanOptions", scanOptions);
     if (!get().scan) return;
+    set({ scanning: true, scanned: 0 });
     try {
       const summary = await api.setScanOptions(scanOptions);
       set({ summary });
     } catch (e) {
       toast.error("Filter is not valid", describeError(e));
+    } finally {
+      set({ scanning: false });
     }
   },
 
@@ -162,7 +175,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   rescan: async (announce = true) => {
     if (!get().scan) return;
-    set({ busy: true });
+    set({ busy: true, scanning: true, scanned: 0 });
     try {
       const summary = await api.rescan();
       usePreviewStore.getState().reset();
@@ -171,7 +184,30 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     } catch (e) {
       toast.error("Could not re-read the folder", describeError(e));
     } finally {
-      set({ busy: false });
+      set({ busy: false, scanning: false });
+    }
+  },
+
+  closeFolder: async () => {
+    if (confirmTimer) clearTimeout(confirmTimer);
+    try {
+      await api.closeFolder();
+    } catch (e) {
+      toast.error("Could not close the folder", describeError(e));
+      return;
+    }
+    usePreviewStore.getState().reset();
+    useSettingsStore.getState().set("lastRoots", []);
+    set({ scan: null, summary: emptySummary(), lastApply: null });
+  },
+
+  clearHistory: async () => {
+    try {
+      const removed = await api.clearHistory();
+      await get().refreshHistory();
+      toast.success(`Cleared ${removed} batch${removed === 1 ? "" : "es"} from the history`);
+    } catch (e) {
+      toast.error("Could not clear the history", describeError(e));
     }
   },
 

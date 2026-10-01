@@ -23,62 +23,67 @@ export function CommitBar() {
     };
   });
 
-  if (lastApply) {
-    return (
-      <div
-        ref={ref}
-        className="commit-bar flex items-center gap-3 px-3 py-2 shrink-0"
-        data-confirmed="true"
-      >
-        <CheckCircle2 size={15} style={{ color: "var(--ok)" }} className="shrink-0" />
-        <span className="text-[12.5px] flex-1">
-          Renamed {formatCount(lastApply.renamed)} file{lastApply.renamed === 1 ? "" : "s"}
-          {lastApply.twoPhase > 0 && (
-            <span style={{ color: "var(--text-3)" }}>
-              {" "}· {lastApply.twoPhase} needed a two-phase rename
-            </span>
-          )}
-          {!lastApply.clean && (
-            <span style={{ color: "var(--warn)" }}> · some needed attention</span>
-          )}
-        </span>
-        <button className="btn" onClick={dismissConfirmation}>Dismiss</button>
-        <button className="btn btn-accent" disabled={busy} onClick={() => undo(lastApply.journalId)}>
-          <Undo2 size={13} />
-          Undo
-        </button>
-      </div>
-    );
-  }
-
   const blocked = summary.blocking > 0;
 
   return (
     <div ref={ref} className="shrink-0">
       <FilesystemNotice />
-      <div className="commit-bar flex items-center gap-3 px-3 py-2">
-      <div className="flex-1 min-w-0">
-        <div className="text-[12.5px] truncate flex items-center gap-2">
-          {planning && <Loader2 size={12} className="animate-spin shrink-0" style={{ color: "var(--text-3)" }} />}
-          <span>{summary.summaryLine}</span>
-        </div>
-        {blocked && (
-          <div className="text-[11px] mt-0.5" style={{ color: "var(--collision)" }}>
-            {reasonText(summary)} Resolve them, or change what happens when a name is taken.
+      <div
+        className="commit-bar flex items-center gap-3 px-3 py-2"
+        data-confirmed={lastApply ? "true" : undefined}
+      >
+      {lastApply ? (
+        <>
+          <CheckCircle2 size={15} style={{ color: "var(--ok)" }} className="shrink-0" />
+          <span className="text-[12.5px] flex-1 min-w-0 truncate">
+            Renamed {formatCount(lastApply.renamed)} file{lastApply.renamed === 1 ? "" : "s"}
+            {lastApply.twoPhase > 0 && (
+              <span style={{ color: "var(--text-3)" }}>
+                {" "}· {lastApply.twoPhase} needed a two-phase rename
+              </span>
+            )}
+            {!lastApply.clean && (
+              <span style={{ color: "var(--warn)" }}> · some needed attention</span>
+            )}
+          </span>
+          <button className="btn" onClick={dismissConfirmation}>Dismiss</button>
+          <button className="btn" disabled={busy} onClick={() => undo(lastApply.journalId)}>
+            <Undo2 size={13} />
+            Undo
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="flex-1 min-w-0">
+            <div className="text-[12.5px] truncate flex items-center gap-2">
+              {planning && <Loader2 size={12} className="animate-spin shrink-0" style={{ color: "var(--text-3)" }} />}
+              <span>{summary.summaryLine}</span>
+            </div>
+            {blocked && (
+              <div className="text-[11px] mt-0.5" style={{ color: "var(--collision)" }}>
+                {reasonText(summary)} Resolve them, or change what happens when a name is taken.
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <button className="btn" onClick={dryRun} disabled={summary.total === 0}>
-        <FileDown size={13} />
-        Dry run
-      </button>
+          <button className="btn" onClick={dryRun} disabled={summary.total === 0}>
+            <FileDown size={13} />
+            Dry run
+          </button>
+        </>
+      )}
 
       <button
         className="btn btn-accent"
-        disabled={!summary.canApply || busy}
+        disabled={!summary.canApply || busy || !!lastApply}
         onClick={apply}
-        title={blocked ? "Resolve the rows above first" : undefined}
+        title={
+          lastApply
+            ? "Dismiss the confirmation to apply again"
+            : blocked
+              ? "Resolve the rows above first"
+              : undefined
+        }
       >
         {busy && <Loader2 size={13} className="animate-spin" />}
         {summary.applyLabel}

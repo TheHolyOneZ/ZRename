@@ -1,3 +1,4 @@
+use super::protect::is_sentinel;
 use super::{CompiledRule, RenameCtx};
 use crate::error::Result;
 use crate::model::{FsProfile, Scope};
@@ -46,9 +47,24 @@ impl Default for Options<'_> {
     }
 }
 
+fn transliterate(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut run = String::new();
+    for c in s.chars() {
+        if is_sentinel(c) {
+            out.push_str(&deunicode::deunicode(&std::mem::take(&mut run)));
+            out.push(c);
+        } else {
+            run.push(c);
+        }
+    }
+    out.push_str(&deunicode::deunicode(&run));
+    out
+}
+
 pub fn sanitise(s: &str, fs: &FsProfile, opts: &Options) -> String {
     let mut out = if opts.transliterate {
-        deunicode::deunicode(s)
+        transliterate(s)
     } else {
         s.to_string()
     };

@@ -7,13 +7,24 @@ use zrename_core::journal::{self, Journal, UndoOptions};
 use zrename_core::model::{FsProfile, RuleSpec};
 use zrename_core::plan::{self, build_plan, PlanOptions};
 use zrename_core::presets::{self, Preset};
-use zrename_core::scan::{scan, ScanOptions};
+use zrename_core::scan::{scan, scan_with_progress, ScanOptions};
 use zrename_core::{dupes, export};
 
 type Res<T> = Result<T, String>;
 
 fn err(e: impl std::fmt::Display) -> String {
     e.to_string()
+}
+
+fn progress_to(app: &tauri::AppHandle) -> impl FnMut(usize) + '_ {
+    use tauri::Emitter;
+    let mut last = std::time::Instant::now();
+    move |n| {
+        if last.elapsed() >= std::time::Duration::from_millis(150) {
+            last = std::time::Instant::now();
+            let _ = app.emit("zrename://scan-progress", n);
+        }
+    }
 }
 
 #[tauri::command]
@@ -38,7 +49,7 @@ pub fn parse_args(args: Vec<String>) -> StartupArgs {
     out
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn capabilities(state: State<AppState>) -> Res<Capabilities> {
     Ok(Capabilities {
         ffprobe: state.meta.has_ffprobe(),
@@ -54,14 +65,15 @@ pub fn capabilities(state: State<AppState>) -> Res<Capabilities> {
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn scan_paths(
+    app: tauri::AppHandle,
     state: State<AppState>,
     paths: Vec<String>,
     options: ScanOptions,
 ) -> Res<ScanResult> {
     let roots: Vec<PathBuf> = paths.iter().map(PathBuf::from).collect();
-    let entries = scan(&roots, &options).map_err(err)?;
+    let entries = scan_with_progress(&roots, &options, &mut progress_to(&app)).map_err(err)?;
 
     let probe = roots.first().cloned().unwrap_or_default();
     let profile = zrename_core::fsinfo::detect_profile(&probe);
@@ -95,14 +107,14 @@ pub fn scan_paths(
     Ok(result)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn set_rules(state: State<AppState>, rules: Vec<RuleSpec>) -> Res<SummaryDto> {
     let mut s = state.session.lock().map_err(err)?;
     s.rules = rules;
     replan(&mut s, &state.meta)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn set_conflict_policy(state: State<AppState>, policy: ConflictPolicy) -> Res<SummaryDto> {
     let mut s = state.session.lock().map_err(err)?;
     let mut opts = s.options();
@@ -111,7 +123,7 @@ pub fn set_conflict_policy(state: State<AppState>, policy: ConflictPolicy) -> Re
     replan(&mut s, &state.meta)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn set_placeholder(state: State<AppState>, placeholder: String) -> Res<SummaryDto> {
     let mut s = state.session.lock().map_err(err)?;
     let mut opts = s.options();
@@ -149,7 +161,7 @@ fn replan(
     Ok(dto)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn set_row_excluded(state: State<AppState>, index: usize, excluded: bool) -> Res<SummaryDto> {
     let mut s = state.session.lock().map_err(err)?;
     if excluded {
@@ -160,7 +172,7 @@ pub fn set_row_excluded(state: State<AppState>, index: usize, excluded: bool) ->
     replan(&mut s, &state.meta)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn exclude_rows(
     state: State<AppState>,
     indices: Vec<usize>,
@@ -177,14 +189,14 @@ pub fn exclude_rows(
     replan(&mut s, &state.meta)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn clear_exclusions(state: State<AppState>) -> Res<SummaryDto> {
     let mut s = state.session.lock().map_err(err)?;
     s.excluded.clear();
     replan(&mut s, &state.meta)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn set_missing_token(
     state: State<AppState>,
     policy: zrename_core::MissingToken,
@@ -196,7 +208,7 @@ pub fn set_missing_token(
     replan(&mut s, &state.meta)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn set_long_paths(state: State<AppState>, enabled: bool) -> Res<SummaryDto> {
     let mut s = state.session.lock().map_err(err)?;
     let mut opts = s.options();
@@ -205,7 +217,7 @@ pub fn set_long_paths(state: State<AppState>, enabled: bool) -> Res<SummaryDto> 
     replan(&mut s, &state.meta)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_rows(state: State<AppState>, query: RowQuery) -> Res<RowPage> {
     let mut s = state.session.lock().map_err(err)?;
     let view: Vec<usize> = s.view(&query).to_vec();
@@ -234,30 +246,57 @@ pub fn get_rows(state: State<AppState>, query: RowQuery) -> Res<RowPage> {
     Ok(RowPage { rows, total })
 }
 
-#[tauri::command]
-pub fn rescan(state: State<AppState>) -> Res<SummaryDto> {
-    let mut s = state.session.lock().map_err(err)?;
-    if s.roots.is_empty() {
+#[tauri::command(async)]
+pub fn rescan(app: tauri::AppHandle, state: State<AppState>) -> Res<SummaryDto> {
+    let (roots, opts) = {
+        let s = state.session.lock().map_err(err)?;
+        (s.roots.clone(), s.scan_opts.clone())
+    };
+    if roots.is_empty() {
         return Ok(SummaryDto::empty());
     }
-    let roots = s.roots.clone();
-    let opts = s.scan_opts.clone();
-    s.entries = scan(&roots, &opts).map_err(err)?;
+    let entries = scan_with_progress(&roots, &opts, &mut progress_to(&app)).map_err(err)?;
+    let mut s = state.session.lock().map_err(err)?;
+    if s.roots == roots {
+        s.entries = entries;
+    }
     state.meta.clear();
     replan(&mut s, &state.meta)
 }
 
-#[tauri::command]
-pub fn set_scan_options(state: State<AppState>, options: ScanOptions) -> Res<SummaryDto> {
-    let mut s = state.session.lock().map_err(err)?;
-    s.scan_opts = options;
-    if s.roots.is_empty() {
+#[tauri::command(async)]
+pub fn set_scan_options(
+    app: tauri::AppHandle,
+    state: State<AppState>,
+    options: ScanOptions,
+) -> Res<SummaryDto> {
+    let roots = {
+        let mut s = state.session.lock().map_err(err)?;
+        s.scan_opts = options.clone();
+        s.roots.clone()
+    };
+    if roots.is_empty() {
         return Ok(SummaryDto::empty());
     }
-    let roots = s.roots.clone();
-    let opts = s.scan_opts.clone();
-    s.entries = scan(&roots, &opts).map_err(err)?;
+    let entries = scan_with_progress(&roots, &options, &mut progress_to(&app)).map_err(err)?;
+    let mut s = state.session.lock().map_err(err)?;
+    if s.roots == roots && s.scan_opts == options {
+        s.entries = entries;
+    }
     replan(&mut s, &state.meta)
+}
+
+#[tauri::command(async)]
+pub fn close_folder(state: State<AppState>) -> Res<SummaryDto> {
+    *state.watch.lock().map_err(err)? = None;
+    let mut s = state.session.lock().map_err(err)?;
+    s.roots.clear();
+    s.entries.clear();
+    s.excluded.clear();
+    s.plan = None;
+    s.invalidate_view();
+    state.meta.clear();
+    Ok(SummaryDto::empty())
 }
 
 #[tauri::command]
@@ -327,7 +366,7 @@ pub async fn apply(
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_history() -> Res<Vec<HistoryEntry>> {
     let dir = journal::default_dir().map_err(err)?;
     Ok(journal::list(&dir)
@@ -345,6 +384,12 @@ pub fn list_history() -> Res<Vec<HistoryEntry>> {
                 .collect(),
         })
         .collect())
+}
+
+#[tauri::command(async)]
+pub fn clear_history() -> Res<usize> {
+    let dir = journal::default_dir().map_err(err)?;
+    journal::prune(&dir, 0).map_err(err)
 }
 
 #[tauri::command]
@@ -401,7 +446,7 @@ pub async fn undo_batch(id: Option<String>, force: bool) -> Res<UndoResult> {
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_presets() -> Res<Vec<Preset>> {
     let dir = presets::default_dir().map_err(err)?;
     if presets::list(&dir).is_empty() {
@@ -410,7 +455,7 @@ pub fn list_presets() -> Res<Vec<Preset>> {
     Ok(presets::list(&dir))
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn save_preset(preset: Preset) -> Res<String> {
     let dir = presets::default_dir().map_err(err)?;
     Ok(preset
@@ -420,14 +465,14 @@ pub fn save_preset(preset: Preset) -> Res<String> {
         .into_owned())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn delete_preset(name: String) -> Res<()> {
     let dir = presets::default_dir().map_err(err)?;
     let path = dir.join(format!("{}.toml", presets::slug(&name)));
     std::fs::remove_file(&path).map_err(err)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn import_preset(path: String) -> Res<Preset> {
     let p = Preset::load(std::path::Path::new(&path)).map_err(err)?;
     let dir = presets::default_dir().map_err(err)?;
@@ -435,12 +480,12 @@ pub fn import_preset(path: String) -> Res<Preset> {
     Ok(p)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn export_preset(preset: Preset, path: String) -> Res<()> {
     std::fs::write(&path, preset.to_toml().map_err(err)?).map_err(err)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn regex_test(
     pattern: String,
     sample: String,
@@ -493,7 +538,7 @@ fn first_line(s: &str) -> String {
         .to_string()
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn export_plan(state: State<AppState>, format: String) -> Res<String> {
     let s = state.session.lock().map_err(err)?;
     let Some(plan) = &s.plan else {
@@ -506,7 +551,7 @@ pub fn export_plan(state: State<AppState>, format: String) -> Res<String> {
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn find_dupes(state: State<AppState>) -> Res<Vec<DupeGroupDto>> {
     let s = state.session.lock().map_err(err)?;
     Ok(dupes::find_duplicates(&s.entries)
@@ -529,7 +574,7 @@ pub fn find_dupes(state: State<AppState>) -> Res<Vec<DupeGroupDto>> {
         .collect())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn detect_fs(path: String) -> Res<FsProfile> {
     Ok(zrename_core::fsinfo::detect_profile(std::path::Path::new(
         &path,
@@ -621,7 +666,7 @@ mod tests {
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn watch_start(
     app: tauri::AppHandle,
     state: State<AppState>,
@@ -661,13 +706,13 @@ pub fn watch_start(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn watch_stop(state: State<AppState>) -> Res<()> {
     *state.watch.lock().map_err(err)? = None;
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn watch_status(state: State<AppState>) -> Res<bool> {
     Ok(state.watch.lock().map_err(err)?.is_some())
 }

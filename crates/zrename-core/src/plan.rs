@@ -278,6 +278,72 @@ mod tests {
         p.rows.iter().map(|r| r.to_name()).collect()
     }
 
+    #[test]
+    fn leave_alone_keeps_a_bracketed_prefix_through_title_case() {
+        let e = [entry("/r/[www.HBO.com]_last_week_tonight_-_S12E10.mp4", 1)];
+        let spec = RuleSpec::new(RuleKind::Case {
+            style: CaseStyle::Title,
+        })
+        .with_protect(&["[*]"]);
+        assert_eq!(
+            names(&plan(&e, &[spec], &opts())),
+            vec!["[www.HBO.com]_Last_Week_Tonight_-_S12e10.mp4"]
+        );
+    }
+
+    #[test]
+    fn leave_alone_survives_word_rebuilding_and_sentence_case() {
+        let e = [entry("/r/[Keep Me] Some File.txt", 1)];
+        let snake = RuleSpec::new(RuleKind::Case {
+            style: CaseStyle::Snake,
+        })
+        .with_protect(&["[*]"]);
+        assert_eq!(names(&plan(&e, &[snake], &opts())), vec!["[Keep Me]_some_file.txt"]);
+
+        let e = [entry("/r/[ABC] hello WORLD.txt", 1)];
+        let sentence = RuleSpec::new(RuleKind::Case {
+            style: CaseStyle::Sentence,
+        })
+        .with_protect(&["[*]"]);
+        assert_eq!(names(&plan(&e, &[sentence], &opts())), vec!["[ABC] Hello world.txt"]);
+    }
+
+    #[test]
+    fn leave_alone_shields_text_from_replace_and_skips_rules_that_would_eat_it() {
+        let e = [entry("/r/www.site.com - www notes.txt", 1)];
+        let replace = RuleSpec::new(RuleKind::Replace {
+            find: "www".into(),
+            with: "web".into(),
+            regex: false,
+            case_sensitive: false,
+            all: true,
+        })
+        .with_protect(&["www.*.com"]);
+        assert_eq!(names(&plan(&e, &[replace], &opts())), vec!["www.site.com - web notes.txt"]);
+
+        let e = [entry("/r/[tag] name.txt", 1)];
+        let wipe = RuleSpec::new(RuleKind::Replace {
+            find: ".+".into(),
+            with: "x".into(),
+            regex: true,
+            case_sensitive: false,
+            all: true,
+        })
+        .with_protect(&["[*]"]);
+        assert_eq!(names(&plan(&e, &[wipe], &opts())), vec!["[tag] name.txt"]);
+    }
+
+    #[test]
+    fn leave_alone_is_ignored_by_rules_that_do_not_edit_text() {
+        let spec = RuleSpec::new(RuleKind::Insert {
+            text: "x_".into(),
+            at: InsertAt::Prefix,
+        })
+        .with_protect(&["*"]);
+        let e = [entry("/r/a.txt", 1)];
+        assert_eq!(names(&plan(&e, &[spec], &opts())), vec!["x_a.txt"]);
+    }
+
     struct FakeMeta(HashMap<String, String>);
 
     impl MetadataProvider for FakeMeta {

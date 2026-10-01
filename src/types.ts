@@ -63,7 +63,7 @@ export type RuleKind =
 
 export type RuleName = RuleKind["kind"];
 
-export type RuleSpec = { id: string; enabled: boolean; scope: Scope } & RuleKind;
+export type RuleSpec = { id: string; enabled: boolean; scope: Scope; protect?: string[] } & RuleKind;
 
 export interface ScanOptions {
   recursive: boolean;

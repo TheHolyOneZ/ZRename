@@ -300,6 +300,19 @@ fn underscore() -> String {
     "_".to_string()
 }
 
+impl RuleKind {
+    pub fn supports_protect(&self) -> bool {
+        matches!(
+            self,
+            RuleKind::Replace { .. }
+                | RuleKind::Case { .. }
+                | RuleKind::Remove { .. }
+                | RuleKind::Trim { .. }
+                | RuleKind::Sanitise { .. }
+        )
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct RuleSpec {
     #[serde(default = "new_id")]
@@ -308,6 +321,8 @@ pub struct RuleSpec {
     pub enabled: bool,
     #[serde(default)]
     pub scope: Scope,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub protect: Vec<String>,
     #[serde(flatten)]
     pub kind: RuleKind,
 }
@@ -322,12 +337,18 @@ impl RuleSpec {
             id: new_id(),
             enabled: true,
             scope: Scope::default(),
+            protect: Vec::new(),
             kind,
         }
     }
 
     pub fn with_scope(mut self, scope: Scope) -> Self {
         self.scope = scope;
+        self
+    }
+
+    pub fn with_protect(mut self, patterns: &[&str]) -> Self {
+        self.protect = patterns.iter().map(|p| p.to_string()).collect();
         self
     }
 }

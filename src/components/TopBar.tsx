@@ -1,6 +1,6 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { save } from "@tauri-apps/plugin-dialog";
-import { ChevronDown, Clock, Command, FolderOpen, RefreshCw, Save } from "lucide-react";
+import { ChevronDown, Clock, Command, FolderOpen, RefreshCw, Save, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, describeError } from "../lib/tauri";
 import { formatCount, middleEllipsis } from "../lib/format";
@@ -14,7 +14,7 @@ import { CheckIcon, Popover } from "./ui";
 import { PromptDialog } from "./PromptDialog";
 
 export function TopBar({ onPalette }: { onPalette: () => void }) {
-  const { scan, summary, presetName, setPresetName, load, rescan, busy, setScanOptions } =
+  const { scan, summary, presetName, setPresetName, load, rescan, busy, setScanOptions, closeFolder } =
     useSessionStore();
   const { rules, setRules } = useRuleStore();
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -38,7 +38,11 @@ export function TopBar({ onPalette }: { onPalette: () => void }) {
   });
 
   async function choose() {
-    const picked = await open({ multiple: true, directory: true });
+    const picked = await open({
+      multiple: true,
+      directory: true,
+      defaultPath: scan?.roots[0] ?? recent[0],
+    });
     if (!picked) return;
     await load(Array.isArray(picked) ? picked : [picked]);
   }
@@ -95,6 +99,18 @@ export function TopBar({ onPalette }: { onPalette: () => void }) {
             aria-label="Recent folders"
           >
             <ChevronDown size={11} />
+          </button>
+        )}
+
+        {scan && (
+          <button
+            className="btn btn-ghost !p-1 shrink-0"
+            onClick={closeFolder}
+            disabled={busy}
+            title="Close this folder and clear the list"
+            aria-label="Close folder"
+          >
+            <X size={11} />
           </button>
         )}
 

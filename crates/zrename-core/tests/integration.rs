@@ -1,7 +1,4 @@
-//! End-to-end tests against a real filesystem.
-//!
-//! The unit tests prove the planning logic; these prove that what lands on disk
-//! matches the plan, and that undo puts it all back.
+
 
 use std::path::Path;
 use zrename_core::execute::{execute, ConflictPolicy, ExecuteOptions};
@@ -33,12 +30,12 @@ fn plan_for(root: &Path, specs: &[RuleSpec], opts: &PlanOptions) -> Plan {
     build_plan(&entries, specs, &NullProvider, opts).unwrap()
 }
 
-/// Options judged against the filesystem actually hosting the test directory.
+
 fn local_opts(root: &Path) -> PlanOptions {
     PlanOptions::for_path(root)
 }
 
-/// Runs a plan and returns the report.
+
 fn apply(
     plan: &Plan,
     root: &Path,
@@ -110,7 +107,7 @@ fn a_batch_applies_and_then_undoes_completely() {
         ]
     );
 
-    // Reopen the journal from disk, as a later session would.
+
     let history = journal::list(store.path()).unwrap();
     assert_eq!(history.len(), 1);
     assert_eq!(history[0].count, 5);
@@ -175,8 +172,7 @@ fn a_swap_between_two_files_completes_through_temp_names() {
         all: true,
     })];
 
-    // Build the swap directly: the rule engine has no "swap" rule, so the plan
-    // is constructed by hand to exercise execution ordering on real files.
+
     let opts = local_opts(root);
     let mut plan = plan_for(root, &specs, &opts);
     plan.rows[0].to = root.join("b.txt");
@@ -208,8 +204,7 @@ fn a_case_only_rename_lands_when_the_profile_says_the_filesystem_folds_case() {
     let root = dir.path();
     touch(&root.join("photo.JPG"), b"jpeg");
 
-    // Judged as NTFS: source and target are the same entry, so this must be
-    // routed through a temp name rather than attempted directly.
+
     let opts = PlanOptions {
         profile: FsProfile::ntfs(),
         ..Default::default()
@@ -239,7 +234,7 @@ fn a_chain_of_renames_does_not_eat_a_file() {
     touch(&root.join("2.txt"), b"two");
     touch(&root.join("3.txt"), b"three");
 
-    // 1->2, 2->3, 3->4
+
     let opts = local_opts(root);
     let mut plan = plan_for(root, &[], &opts);
     for (i, target) in ["2.txt", "3.txt", "4.txt"].iter().enumerate() {
@@ -348,8 +343,7 @@ fn overwrite_does_clear_a_collision_with_a_bystander_file() {
         }),
     ];
 
-    // `final.txt` is not part of the selection's rename set, so the collision is
-    // with a bystander and overwriting it is a coherent choice.
+
     let blocked = PlanOptions {
         conflict: ConflictPolicy::Stop,
         ..local_opts(root)
@@ -500,7 +494,7 @@ fn nothing_is_left_at_a_temp_name_when_a_two_phase_batch_finishes() {
         touch(&root.join(format!("{n}.txt")), format!("{n}").as_bytes());
     }
 
-    // A six-element cycle: every file shifts one place along.
+
     let opts = local_opts(root);
     let mut plan = plan_for(root, &[], &opts);
     for i in 0..6 {
@@ -618,7 +612,7 @@ fn an_empty_selection_is_a_no_op_rather_than_an_error() {
     );
 }
 
-/// Confirms the journal directory the spec names is what the code resolves to.
+
 #[test]
 fn the_journal_directory_matches_the_spec() {
     let dir = journal::default_dir().unwrap();

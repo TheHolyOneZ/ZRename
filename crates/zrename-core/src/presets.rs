@@ -244,6 +244,30 @@ mod tests {
     }
 
     #[test]
+    fn leave_alone_patterns_survive_a_toml_round_trip() {
+        let original = Preset {
+            name: "Keep tags".into(),
+            description: None,
+            conflict: None,
+            scan: None,
+            rules: vec![
+                RuleSpec::new(RuleKind::Case {
+                    style: crate::model::CaseStyle::Title,
+                })
+                .with_protect(&["[*]", "www.HBO.com"]),
+                RuleSpec::new(RuleKind::Case {
+                    style: crate::model::CaseStyle::Lower,
+                }),
+            ],
+        };
+        let text = original.to_toml().unwrap();
+        let back = Preset::from_toml(&text).unwrap();
+        assert_eq!(back.rules[0].protect, vec!["[*]", "www.HBO.com"]);
+        assert!(back.rules[1].protect.is_empty());
+        assert_eq!(text.matches("protect").count(), 1, "{text}");
+    }
+
+    #[test]
     fn every_rule_kind_survives_a_toml_round_trip() {
         let rules = vec![
             RuleSpec::new(RuleKind::Replace {

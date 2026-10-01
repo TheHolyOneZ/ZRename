@@ -30,6 +30,12 @@ describe("summariseRule", () => {
     expect(summariseRule(replace)).toBe("regex “^IMG_(\\d+)” → “shot-$1”");
   });
 
+  it("mentions the text a rule leaves alone", () => {
+    const rule = { ...defaultRule("case"), style: "title", protect: ["[*]"] } as RuleSpec;
+    expect(summariseRule(rule)).toBe("Title Case · keeps “[*]”");
+    expect(summariseRule({ ...rule, protect: [] } as RuleSpec)).toBe("Title Case");
+  });
+
   it("says so plainly when a rule is not configured yet", () => {
     expect(summariseRule(defaultRule("replace"))).toBe("not configured");
     expect(summariseRule(defaultRule("template"))).toBe("not configured");

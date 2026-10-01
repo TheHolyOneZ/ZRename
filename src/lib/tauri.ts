@@ -5,49 +5,61 @@ import type {
   UndoResult, ConflictPolicy, MissingToken,
 } from "../types";
 
+let queue: Promise<unknown> = Promise.resolve();
+
+function serial<T>(run: () => Promise<T>): Promise<T> {
+  const next = queue.then(run, run);
+  queue = next.catch(() => {});
+  return next;
+}
+
 export const api = {
   startupArgs: () => invoke<StartupArgs>("startup_args"),
 
   capabilities: () => invoke<Capabilities>("capabilities"),
 
   scanPaths: (paths: string[], options: ScanOptions) =>
-    invoke<ScanResult>("scan_paths", { paths, options }),
+    serial(() => invoke<ScanResult>("scan_paths", { paths, options })),
 
-  setRules: (rules: RuleSpec[]) => invoke<Summary>("set_rules", { rules }),
+  setRules: (rules: RuleSpec[]) => serial(() => invoke<Summary>("set_rules", { rules })),
 
   setConflictPolicy: (policy: ConflictPolicy) =>
-    invoke<Summary>("set_conflict_policy", { policy }),
+    serial(() => invoke<Summary>("set_conflict_policy", { policy })),
 
   setPlaceholder: (placeholder: string) =>
-    invoke<Summary>("set_placeholder", { placeholder }),
+    serial(() => invoke<Summary>("set_placeholder", { placeholder })),
 
   setScanOptions: (options: ScanOptions) =>
-    invoke<Summary>("set_scan_options", { options }),
+    serial(() => invoke<Summary>("set_scan_options", { options })),
 
   getRows: (query: RowQuery) => invoke<RowPage>("get_rows", { query }),
 
   setRowExcluded: (index: number, excluded: boolean) =>
-    invoke<Summary>("set_row_excluded", { index, excluded }),
+    serial(() => invoke<Summary>("set_row_excluded", { index, excluded })),
 
   excludeRows: (indices: number[], excluded: boolean) =>
-    invoke<Summary>("exclude_rows", { indices, excluded }),
+    serial(() => invoke<Summary>("exclude_rows", { indices, excluded })),
 
-  clearExclusions: () => invoke<Summary>("clear_exclusions"),
+  clearExclusions: () => serial(() => invoke<Summary>("clear_exclusions")),
 
-  setLongPaths: (enabled: boolean) => invoke<Summary>("set_long_paths", { enabled }),
+  setLongPaths: (enabled: boolean) => serial(() => invoke<Summary>("set_long_paths", { enabled })),
 
   setMissingToken: (policy: MissingToken) =>
-    invoke<Summary>("set_missing_token", { policy }),
+    serial(() => invoke<Summary>("set_missing_token", { policy })),
 
-  rescan: () => invoke<Summary>("rescan"),
+  rescan: () => serial(() => invoke<Summary>("rescan")),
+
+  closeFolder: () => serial(() => invoke<Summary>("close_folder")),
 
   apply: (preset: string | null, paranoid: boolean) =>
-    invoke<ApplyResult>("apply", { preset, paranoid }),
+    serial(() => invoke<ApplyResult>("apply", { preset, paranoid })),
 
   listHistory: () => invoke<HistoryEntry[]>("list_history"),
 
+  clearHistory: () => invoke<number>("clear_history"),
+
   undoBatch: (id: string | null, force: boolean) =>
-    invoke<UndoResult>("undo_batch", { id, force }),
+    serial(() => invoke<UndoResult>("undo_batch", { id, force })),
 
   listPresets: () => invoke<Preset[]>("list_presets"),
   savePreset: (preset: Preset) => invoke<string>("save_preset", { preset }),

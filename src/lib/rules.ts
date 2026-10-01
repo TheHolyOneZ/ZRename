@@ -96,6 +96,13 @@ function positionLabel(r: { at: string; index?: number; marker?: string }): stri
 
 
 export function summariseRule(rule: RuleSpec): string {
+  const base = describeRule(rule);
+  const kept = rule.protect ?? [];
+  if (kept.length === 0) return base;
+  return `${base} · keeps ${kept.map((p) => `“${ellipsis(p, 14)}”`).join(", ")}`;
+}
+
+function describeRule(rule: RuleSpec): string {
   switch (rule.kind) {
     case "replace": {
       if (!rule.find) return "not configured";

@@ -1,13 +1,15 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { FolderOpen, Inbox } from "lucide-react";
 import { useSessionStore } from "../store/useSessionStore";
+import { useSettingsStore } from "../store/useSettingsStore";
 
 
 export function DropZone() {
   const load = useSessionStore((s) => s.load);
+  const recent = useSettingsStore((s) => s.recentFolders);
 
   async function choose(directory: boolean) {
-    const picked = await open({ multiple: true, directory });
+    const picked = await open({ multiple: true, directory, defaultPath: recent[0] });
     if (!picked) return;
     await load(Array.isArray(picked) ? picked : [picked]);
   }

@@ -1,6 +1,7 @@
 pub mod case;
 pub mod ext;
 pub mod number;
+pub mod protect;
 pub mod sanitise;
 pub mod text;
 
@@ -101,6 +102,17 @@ pub trait CompiledRule: Send + Sync {
 }
 
 pub fn compile(spec: &RuleSpec) -> Result<Box<dyn CompiledRule>> {
+    let rule = compile_kind(spec)?;
+    if !spec.kind.supports_protect() {
+        return Ok(rule);
+    }
+    Ok(match protect::compile_patterns(&spec.protect)? {
+        Some(re) => Box::new(protect::Protected { inner: rule, re }),
+        None => rule,
+    })
+}
+
+fn compile_kind(spec: &RuleSpec) -> Result<Box<dyn CompiledRule>> {
     let scope = spec.scope;
     Ok(match &spec.kind {
         RuleKind::Replace {
@@ -190,6 +202,13 @@ pub fn split_words(s: &str) -> Vec<String> {
     let mut cur = String::new();
 
     for (i, &c) in chars.iter().enumerate() {
+        if protect::is_sentinel(c) {
+            if !cur.is_empty() {
+                words.push(std::mem::take(&mut cur));
+            }
+            words.push(c.to_string());
+            continue;
+        }
         if !c.is_alphanumeric() {
             if !cur.is_empty() {
                 words.push(std::mem::take(&mut cur));

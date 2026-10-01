@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ScanOptions {
     #[serde(default)]
     pub recursive: bool,
@@ -208,7 +208,16 @@ pub fn entry_from(
 }
 
 pub fn scan(roots: &[PathBuf], opts: &ScanOptions) -> Result<Vec<FileEntry>> {
+    scan_with_progress(roots, opts, &mut |_| {})
+}
+
+pub fn scan_with_progress(
+    roots: &[PathBuf],
+    opts: &ScanOptions,
+    progress: &mut dyn FnMut(usize),
+) -> Result<Vec<FileEntry>> {
     let filter = Filter::compile(opts)?;
+    let mut examined = 0usize;
     let mut out: Vec<FileEntry> = Vec::new();
     let mut seen: HashSet<PathBuf> = HashSet::new();
 
@@ -240,6 +249,8 @@ pub fn scan(roots: &[PathBuf], opts: &ScanOptions) -> Result<Vec<FileEntry>> {
         }
 
         for item in walker.sort_by_file_name() {
+            examined += 1;
+            progress(examined);
             let Ok(item) = item else { continue };
             let Ok(meta) = item.metadata() else { continue };
             let e = entry_from(item.path(), &meta, item.depth(), item.path_is_symlink());

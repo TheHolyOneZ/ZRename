@@ -22,6 +22,45 @@ export function RuleEditor({ rule }: { rule: RuleSpec }) {
       </div>
 
       <Body rule={rule} set={set} />
+
+      {PROTECTABLE.has(rule.kind) && <LeaveAlone rule={rule} set={set} />}
+    </div>
+  );
+}
+
+const PROTECTABLE = new Set<RuleSpec["kind"]>(["replace", "case", "remove", "trim", "sanitise"]);
+
+function LeaveAlone({ rule, set }: { rule: RuleSpec; set: Setter }) {
+  const joined = (rule.protect ?? []).join(", ");
+  const [text, setText] = useState(joined);
+
+  useEffect(() => {
+    setText(joined);
+  }, [rule.id]);
+
+  return (
+    <div className="flex flex-col gap-1">
+      <Row label="Leave alone">
+        <Text
+          value={text}
+          mono
+          placeholder="[*], www.HBO.com"
+          onChange={(v) => {
+            setText(v);
+            set({
+              protect: v
+                .split(",")
+                .map((p) => p.trim())
+                .filter(Boolean),
+            });
+          }}
+        />
+      </Row>
+      <Hint>
+        Text this rule must not change. Separate entries with commas; <code className="mono">*</code> matches
+        anything, so <code className="mono">[*]</code> keeps every bracketed part as it is. Letter case is
+        ignored when matching.
+      </Hint>
     </div>
   );
 }

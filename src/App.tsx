@@ -13,6 +13,7 @@ import { PreviewTable } from "./components/PreviewTable";
 import { ResizeHandles } from "./components/ResizeHandles";
 import { RuleEditor } from "./components/RuleEditor";
 import { RuleStack } from "./components/RuleStack";
+import { ScanProgress } from "./components/ScanProgress";
 import { Settings } from "./components/Settings";
 import { Titlebar } from "./components/Titlebar";
 import { Toasts } from "./components/Toast";
@@ -152,6 +153,7 @@ export default function App() {
       <Titlebar onAbout={() => setAbout(true)} onSettings={() => setSettingsOpen(true)} subtitle={subtitle} />
       <TopBar onPalette={() => setPalette(true)} />
 
+      <div className="flex-1 flex flex-col min-h-0 relative">
       {!session.scan ? (
         <DropZone />
       ) : (
@@ -182,6 +184,8 @@ export default function App() {
           </main>
         </div>
       )}
+      <ScanProgress />
+      </div>
 
       <CommandPalette open={palette} onClose={() => setPalette(false)} commands={commands} />
       <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
@@ -223,6 +227,13 @@ function useCommands(
         disabled: session.history.length === 0,
       },
       { id: "rescan", label: "Re-read the folder", shortcut: "F5", run: () => session.rescan() },
+      {
+        id: "close-folder",
+        label: "Close the folder",
+        hint: "Clear the list of files",
+        run: () => session.closeFolder(),
+        disabled: !session.scan,
+      },
       {
         id: "hide-unchanged",
         label: settings.hideUnchanged ? "Show unchanged rows" : "Hide unchanged rows",
