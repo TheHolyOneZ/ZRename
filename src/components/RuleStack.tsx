@@ -16,7 +16,6 @@ export function RuleStack() {
   const addRef = useRef<HTMLButtonElement>(null);
   const closeAdd = useCallback(() => setAddOpen(false), []);
 
-
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   useEffect(() => {

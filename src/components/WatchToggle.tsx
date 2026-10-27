@@ -7,7 +7,6 @@ import { toast } from "../store/useToastStore";
 import { useRuleStore } from "../store/useRuleStore";
 import type { ApplyResult } from "../types";
 
-
 export function WatchToggle() {
   const { scan, presetName, refreshHistory, rescan } = useSessionStore();
   const rules = useRuleStore((s) => s.rules);
@@ -29,9 +28,7 @@ export function WatchToggle() {
       applied.then((f) => f()).catch(() => {});
       failed.then((f) => f()).catch(() => {});
     };
-
   }, []);
-
 
   useEffect(() => {
     if (on && (rules.length === 0 || !scan)) {

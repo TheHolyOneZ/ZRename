@@ -3,7 +3,6 @@ import { api, describeError } from "../lib/tauri";
 import { toast } from "./useToastStore";
 import type { Row } from "../types";
 
-
 const OVERSCAN = 60;
 
 interface PreviewState {
@@ -72,11 +71,9 @@ export const usePreviewStore = create<PreviewState>((set, get) => ({
       });
   },
 
-
   invalidate: (filters) => {
     seq++;
     set({ start: 0, rows: [], loading: false });
-
 
     get().ensure(0, 80, filters);
   },
@@ -93,10 +90,8 @@ export const usePreviewStore = create<PreviewState>((set, get) => ({
 
   select: (row) => set({ selected: row?.index ?? null, selectedRow: row }),
 
-
   reset: () => set({ start: 0, rows: [], selected: null, selectedRow: null, loading: false }),
 }));
-
 
 export function rowAt(state: PreviewState, viewIndex: number): Row | undefined {
   return state.rows[viewIndex - state.start];

@@ -1,5 +1,3 @@
-
-
 use std::path::Path;
 use zrename_core::execute::{execute, ConflictPolicy, ExecuteOptions};
 use zrename_core::journal::{self, Journal, UndoOptions};
@@ -30,11 +28,9 @@ fn plan_for(root: &Path, specs: &[RuleSpec], opts: &PlanOptions) -> Plan {
     build_plan(&entries, specs, &NullProvider, opts).unwrap()
 }
 
-
 fn local_opts(root: &Path) -> PlanOptions {
     PlanOptions::for_path(root)
 }
-
 
 fn apply(
     plan: &Plan,
@@ -107,7 +103,6 @@ fn a_batch_applies_and_then_undoes_completely() {
         ]
     );
 
-
     let history = journal::list(store.path()).unwrap();
     assert_eq!(history.len(), 1);
     assert_eq!(history[0].count, 5);
@@ -172,7 +167,6 @@ fn a_swap_between_two_files_completes_through_temp_names() {
         all: true,
     })];
 
-
     let opts = local_opts(root);
     let mut plan = plan_for(root, &specs, &opts);
     plan.rows[0].to = root.join("b.txt");
@@ -204,7 +198,6 @@ fn a_case_only_rename_lands_when_the_profile_says_the_filesystem_folds_case() {
     let root = dir.path();
     touch(&root.join("photo.JPG"), b"jpeg");
 
-
     let opts = PlanOptions {
         profile: FsProfile::ntfs(),
         ..Default::default()
@@ -233,7 +226,6 @@ fn a_chain_of_renames_does_not_eat_a_file() {
     touch(&root.join("1.txt"), b"one");
     touch(&root.join("2.txt"), b"two");
     touch(&root.join("3.txt"), b"three");
-
 
     let opts = local_opts(root);
     let mut plan = plan_for(root, &[], &opts);
@@ -342,7 +334,6 @@ fn overwrite_does_clear_a_collision_with_a_bystander_file() {
             mode: ExtMode::Set { ext: "txt".into() },
         }),
     ];
-
 
     let blocked = PlanOptions {
         conflict: ConflictPolicy::Stop,
@@ -494,7 +485,6 @@ fn nothing_is_left_at_a_temp_name_when_a_two_phase_batch_finishes() {
         touch(&root.join(format!("{n}.txt")), format!("{n}").as_bytes());
     }
 
-
     let opts = local_opts(root);
     let mut plan = plan_for(root, &[], &opts);
     for i in 0..6 {
@@ -611,7 +601,6 @@ fn an_empty_selection_is_a_no_op_rather_than_an_error() {
         "no journal for a batch with nothing in it"
     );
 }
-
 
 #[test]
 fn the_journal_directory_matches_the_spec() {

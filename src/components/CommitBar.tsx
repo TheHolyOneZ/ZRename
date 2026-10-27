@@ -10,7 +10,6 @@ import { toast } from "../store/useToastStore";
 import { formatCount } from "../lib/format";
 import { useLayoutEffect, useRef } from "react";
 
-
 export function CommitBar() {
   const { summary, apply, undo, busy, planning, lastApply, dismissConfirmation } = useSessionStore();
   const ref = useRef<HTMLDivElement>(null);
@@ -92,7 +91,6 @@ export function CommitBar() {
     </div>
   );
 }
-
 
 function FilesystemNotice() {
   const scan = useSessionStore((s) => s.scan);

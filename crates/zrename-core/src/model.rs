@@ -323,6 +323,8 @@ pub struct RuleSpec {
     pub scope: Scope,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub protect: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
     #[serde(flatten)]
     pub kind: RuleKind,
 }
@@ -338,6 +340,7 @@ impl RuleSpec {
             enabled: true,
             scope: Scope::default(),
             protect: Vec::new(),
+            label: None,
             kind,
         }
     }
@@ -349,6 +352,11 @@ impl RuleSpec {
 
     pub fn with_protect(mut self, patterns: &[&str]) -> Self {
         self.protect = patterns.iter().map(|p| p.to_string()).collect();
+        self
+    }
+
+    pub fn with_label(mut self, label: &str) -> Self {
+        self.label = Some(label.to_string());
         self
     }
 }

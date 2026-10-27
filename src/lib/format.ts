@@ -2,7 +2,6 @@ import type { DiffSpan } from "../types";
 
 export interface Part { text: string; ws: boolean }
 
-
 export function edgeBounds(name: string): { leadEnd: number; trailStart: number } {
   let leadEnd = 0;
   while (leadEnd < name.length && isSpace(name[leadEnd])) leadEnd++;
@@ -16,7 +15,6 @@ export function edgeBounds(name: string): { leadEnd: number; trailStart: number 
 function isSpace(c: string): boolean {
   return c === " " || c === "\t" || c === " ";
 }
-
 
 export function splitEdges(
   text: string,
@@ -43,12 +41,10 @@ export function splitEdges(
   return parts;
 }
 
-
 export function sideSpans(spans: DiffSpan[], side: "old" | "new"): DiffSpan[] {
   const drop = side === "old" ? "insert" : "delete";
   return spans.filter((s) => s.op !== drop);
 }
-
 
 export function sideText(spans: DiffSpan[], side: "old" | "new"): string {
   return sideSpans(spans, side)
@@ -72,7 +68,6 @@ export function formatBytes(n: number): string {
   return `${v < 10 ? v.toFixed(1) : Math.round(v)} ${units[i]}`;
 }
 
-
 export function formatBatchTime(id: string): string {
   const m = id.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2})-(\d{2})-(\d{2})/);
   if (!m) return id;
@@ -85,13 +80,11 @@ export function formatBatchTime(id: string): string {
   return sameDay ? `${h}:${min}` : `${d}/${mo} ${h}:${min}`;
 }
 
-
 export function middleEllipsis(s: string, max: number): string {
   if (s.length <= max) return s;
   const keep = Math.max(1, Math.floor((max - 1) / 2));
   return `${s.slice(0, keep)}…${s.slice(s.length - (max - 1 - keep))}`;
 }
-
 
 export function parseSize(input: string): number | null | undefined {
   const text = input.trim();
@@ -115,7 +108,6 @@ export function parseSize(input: string): number | null | undefined {
 
   return Math.round(value * mult);
 }
-
 
 export function parseDate(input: string, endOfDay = false): number | null | undefined {
   const text = input.trim();

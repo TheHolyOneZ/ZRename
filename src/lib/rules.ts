@@ -14,7 +14,6 @@ export const RULE_LABELS: Record<RuleName, string> = {
   csv_map: "CSV mapping",
 };
 
-
 export const RULE_ORDER: RuleName[] = [
   "replace", "case", "insert", "remove", "trim",
   "number", "extension", "sanitise", "template", "move_into", "csv_map",
@@ -34,12 +33,22 @@ export const RULE_HINTS: Record<RuleName, string> = {
   csv_map: "Rename from an external old,new list",
 };
 
+export function ruleTitle(rule: RuleSpec): string {
+  return rule.label?.trim() || RULE_LABELS[rule.kind];
+}
+
+export function cleanLabel(text: string): string | undefined {
+  const trimmed = text.replace(/\s+/g, " ").trim();
+  return trimmed ? trimmed.slice(0, MAX_LABEL) : undefined;
+}
+
+export const MAX_LABEL = 80;
+
 export const defaultScope = (): Scope => ({ stem: true, ext: false });
 
 export function newId(): string {
   return crypto.randomUUID();
 }
-
 
 export function defaultRule(kind: RuleName): RuleSpec {
   const base = { id: newId(), enabled: true, scope: defaultScope() };
@@ -93,7 +102,6 @@ function positionLabel(r: { at: string; index?: number; marker?: string }): stri
     default: return "";
   }
 }
-
 
 export function summariseRule(rule: RuleSpec): string {
   const base = describeRule(rule);
@@ -169,7 +177,6 @@ function describeRule(rule: RuleSpec): string {
       return rule.path ? ellipsis(rule.path.split(/[\\/]/).pop() ?? rule.path, 26) : "no file chosen";
   }
 }
-
 
 export function isConfigured(rule: RuleSpec): boolean {
   switch (rule.kind) {

@@ -18,7 +18,6 @@ export function Titlebar({ onAbout, onSettings, subtitle }: Props) {
       try {
         setMaximized(await win.isMaximized());
       } catch {
-
       }
     });
     return () => {

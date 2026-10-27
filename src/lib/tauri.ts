@@ -83,7 +83,6 @@ export const api = {
   watchStatus: () => invoke<boolean>("watch_status"),
 };
 
-
 export function describeError(e: unknown): string {
   if (typeof e === "string") return e;
   if (e instanceof Error) return e.message;

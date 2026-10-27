@@ -3,7 +3,6 @@ import { FolderOpen, Inbox } from "lucide-react";
 import { useSessionStore } from "../store/useSessionStore";
 import { useSettingsStore } from "../store/useSettingsStore";
 
-
 export function DropZone() {
   const load = useSessionStore((s) => s.load);
   const recent = useSettingsStore((s) => s.recentFolders);

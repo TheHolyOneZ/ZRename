@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { CheckCircle2, XCircle } from "lucide-react";
-import { RULE_LABELS } from "../lib/rules";
+import { RULE_LABELS, ruleTitle } from "../lib/rules";
 import { api } from "../lib/tauri";
 import { useRuleStore } from "../store/useRuleStore";
 import { usePreviewStore } from "../store/usePreviewStore";
@@ -15,8 +15,9 @@ export function RuleEditor({ rule }: { rule: RuleSpec }) {
   return (
     <div className="flex flex-col gap-2.5 px-3 py-2.5">
       <div className="flex items-center justify-between">
-        <span className="label">
-          Rule · {RULE_LABELS[rule.kind]}
+        <span className="label truncate min-w-0" title={ruleTitle(rule)}>
+          Rule · {ruleTitle(rule)}
+          {rule.label?.trim() && ` · ${RULE_LABELS[rule.kind]}`}
         </span>
         <ScopePicker rule={rule} set={set} />
       </div>

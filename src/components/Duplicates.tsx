@@ -7,7 +7,6 @@ import { toast } from "../store/useToastStore";
 import type { DupeGroup } from "../types";
 import { Modal } from "./Modal";
 
-
 export function Duplicates({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [groups, setGroups] = useState<DupeGroup[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,7 +47,6 @@ export function Duplicates({ open, onClose }: { open: boolean; onClose: () => vo
             <button
               className="btn shrink-0"
               onClick={() => {
-
                 const copies = groups.flatMap((g) => g.indices.slice(1));
                 excludeRows(copies, true);
                 onClose();

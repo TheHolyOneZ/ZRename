@@ -268,6 +268,37 @@ mod tests {
     }
 
     #[test]
+    fn rule_names_survive_a_toml_round_trip() {
+        let original = Preset {
+            name: "Named".into(),
+            description: None,
+            conflict: None,
+            scan: None,
+            rules: vec![
+                RuleSpec::new(RuleKind::Replace {
+                    find: "]".into(),
+                    with: "] ".into(),
+                    regex: false,
+                    case_sensitive: false,
+                    all: true,
+                })
+                .with_label("Add a space after closing brackets"),
+                RuleSpec::new(RuleKind::Case {
+                    style: CaseStyle::Lower,
+                }),
+            ],
+        };
+        let text = original.to_toml().unwrap();
+        let back = Preset::from_toml(&text).unwrap();
+        assert_eq!(
+            back.rules[0].label.as_deref(),
+            Some("Add a space after closing brackets")
+        );
+        assert_eq!(back.rules[1].label, None);
+        assert_eq!(text.matches("label").count(), 1, "{text}");
+    }
+
+    #[test]
     fn every_rule_kind_survives_a_toml_round_trip() {
         let rules = vec![
             RuleSpec::new(RuleKind::Replace {

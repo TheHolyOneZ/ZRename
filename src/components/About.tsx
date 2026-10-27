@@ -5,7 +5,6 @@ import { toast } from "../store/useToastStore";
 import { describeError } from "../lib/tauri";
 import { Modal } from "./Modal";
 
-
 function visit(url: string) {
   openUrl(url).catch((e) =>
     toast.error("Could not open that link", `${url} — ${describeError(e)}`),
@@ -42,6 +41,7 @@ const SHORTCUTS: [string, string][] = [
   ["Ctrl+S", "Save the stack as a preset"],
   ["Delete", "Remove the selected rule"],
   ["Space", "Toggle the selected rule"],
+  ["F2", "Rename the selected rule"],
   ["Ctrl+F", "Filter the preview"],
   ["F5", "Re-read the folder"],
 ];

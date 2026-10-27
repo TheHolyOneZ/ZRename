@@ -1,5 +1,3 @@
-
-
 export type Scope = { stem: boolean; ext: boolean };
 
 export type CaseStyle =
@@ -63,7 +61,13 @@ export type RuleKind =
 
 export type RuleName = RuleKind["kind"];
 
-export type RuleSpec = { id: string; enabled: boolean; scope: Scope; protect?: string[] } & RuleKind;
+export type RuleSpec = {
+  id: string;
+  enabled: boolean;
+  scope: Scope;
+  protect?: string[];
+  label?: string;
+} & RuleKind;
 
 export interface ScanOptions {
   recursive: boolean;

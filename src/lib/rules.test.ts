@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { defaultRule, isConfigured, RULE_ORDER, scopeLabel, summariseRule } from "./rules";
+import {
+  cleanLabel, defaultRule, isConfigured, MAX_LABEL, RULE_ORDER, ruleTitle, scopeLabel, summariseRule,
+} from "./rules";
 import type { RuleSpec } from "../types";
 
 describe("defaultRule", () => {
@@ -105,5 +107,24 @@ describe("scopeLabel", () => {
     expect(scopeLabel({ stem: true, ext: false })).toBe("name");
     expect(scopeLabel({ stem: false, ext: true })).toBe("extension");
     expect(scopeLabel({ stem: true, ext: true })).toBe("name + ext");
+  });
+});
+
+describe("rule names", () => {
+  it("falls back to the rule type when no name is set", () => {
+    const rule = defaultRule("replace");
+    expect(ruleTitle(rule)).toBe("Find & Replace");
+    expect(ruleTitle({ ...rule, label: "   " })).toBe("Find & Replace");
+  });
+
+  it("uses the custom name when there is one", () => {
+    const rule = { ...defaultRule("replace"), label: "Remove website names" };
+    expect(ruleTitle(rule)).toBe("Remove website names");
+  });
+
+  it("tidies a typed name and treats a blank one as no name", () => {
+    expect(cleanLabel("  Clean up   episode titles \n")).toBe("Clean up episode titles");
+    expect(cleanLabel("   ")).toBeUndefined();
+    expect(cleanLabel("x".repeat(200))).toHaveLength(MAX_LABEL);
   });
 });

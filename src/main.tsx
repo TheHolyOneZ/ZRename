@@ -6,7 +6,6 @@ import "./index.css";
 
 initTheme();
 
-
 if (import.meta.env.PROD) {
   document.addEventListener("contextmenu", (e) => {
     const t = e.target as HTMLElement | null;

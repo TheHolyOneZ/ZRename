@@ -50,12 +50,10 @@ export const useSettingsStore = create<SettingsState>()(
   ),
 );
 
-
 export function initTheme() {
   const theme = useSettingsStore.getState().theme;
   document.documentElement.dataset.theme = theme;
 }
-
 
 export function rowHeight(comfortable: boolean): number {
   return comfortable ? 34 : 26;

@@ -9,7 +9,6 @@ export function FilterPanel() {
   const [open, setOpen] = useState(true);
   const [more, setMore] = useState(false);
 
-
   const [minText, setMinText] = useState("");
   const [maxText, setMaxText] = useState("");
   const [afterText, setAfterText] = useState("");

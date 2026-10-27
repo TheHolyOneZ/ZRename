@@ -1,15 +1,15 @@
-name: Windows installer
+name: Build installers
 
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version for the draft release tag, e.g. 0.1.1'
+        description: 'Version for the draft release tag, e.g. 0.1.3'
         required: true
-        default: '0.1.1'
+        default: '0.1.3'
       draft_release:
-        description: 'Also attach the installer to a draft release'
+        description: 'Also attach the installers to a draft release'
         type: boolean
         required: false
         default: true
@@ -19,11 +19,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  windows:
     name: Build NSIS installer
     runs-on: windows-latest
-    permissions:
-      contents: write
 
     steps:
       - uses: actions/checkout@v5
@@ -54,7 +52,6 @@ jobs:
             Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB,1)}} |
             Format-Table -AutoSize
 
-     
       - name: Upload as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -63,7 +60,88 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-     
+  linux:
+    name: Build deb, rpm and AppImage
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential curl wget file patchelf libfuse2 \
+            libwebkit2gtk-4.1-dev libxdo-dev libssl-dev \
+            libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: '.'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the packages
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: pnpm tauri build --bundles deb,rpm,appimage
+
+      - name: Show what was produced
+        run: |
+          ls -l target/release/bundle/deb/*.deb \
+                target/release/bundle/rpm/*.rpm \
+                target/release/bundle/appimage/*.AppImage
+
+      - name: Upload as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zrename-linux-packages
+          path: |
+            target/release/bundle/deb/*.deb
+            target/release/bundle/rpm/*.rpm
+            target/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Collect installers
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: out
+        run: |
+          sha256sum ZRename_*_x64-setup.exe ZRename_*_amd64.deb \
+                    ZRename-*.x86_64.rpm ZRename_*_amd64.AppImage > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          ls -l
+
+      - name: Upload everything as one artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zrename-${{ inputs.version }}-all
+          path: out/*
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Attach to a draft release
         if: ${{ inputs.draft_release }}
         uses: softprops/action-gh-release@v2
@@ -72,9 +150,8 @@ jobs:
           name: ZRename v${{ inputs.version }}
           draft: true
           prerelease: false
-          files: target/release/bundle/nsis/*.exe
+          files: out/*
           body: |
-            Windows installer built from `${{ github.sha }}`.
+            Installers built from `${{ github.sha }}`.
 
-            Download `ZRename_${{ inputs.version }}_x64-setup.exe`, put it in
-            `zrename/releases/`, then delete this draft.
+            

@@ -40,15 +40,11 @@ export default function App() {
 
   useEffect(() => {
     session.init();
-
   }, []);
-
 
   useEffect(() => {
     if (session.scan) session.replan(rules);
-
   }, [rules, session.scan]);
-
 
   useEffect(() => {
     const unlisten = getCurrentWebview().onDragDropEvent((e) => {
@@ -59,7 +55,6 @@ export default function App() {
     return () => {
       unlisten.then((f) => f()).catch(() => {});
     };
-
   }, []);
 
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -76,7 +71,6 @@ export default function App() {
         target?.tagName === "INPUT" ||
         target?.tagName === "TEXTAREA" ||
         target?.isContentEditable === true;
-
 
       const onControl = target?.closest("button, [role='listbox']") != null;
 
@@ -124,6 +118,11 @@ export default function App() {
         useRuleStore.getState().duplicate(selectedId);
         return;
       }
+      if (e.key === "F2" && selectedId) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("zrename:rename-rule", { detail: selectedId }));
+        return;
+      }
       if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown") && selectedId) {
         e.preventDefault();
         useRuleStore.getState().nudge(selectedId, e.key === "ArrowUp" ? -1 : 1);
@@ -142,7 +141,6 @@ export default function App() {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-
   }, [selectedId]);
 
   const subtitle = session.scan ? middleEllipsis(session.scan.roots[0] ?? "", 52) : undefined;

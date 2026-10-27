@@ -24,7 +24,6 @@ export function ResizeHandles() {
       try {
         setMaximized(await win.isMaximized());
       } catch {
-
       }
     });
     return () => {

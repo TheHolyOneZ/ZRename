@@ -25,7 +25,6 @@ const STATUS_ICON: Record<RowStatusKey, typeof Check> = {
 
 function statusColor(status: RowStatusKey): string {
   switch (status) {
-
     case "collision": return "var(--collision)";
     case "invalid":
     case "too_long":
@@ -34,7 +33,6 @@ function statusColor(status: RowStatusKey): string {
     default: return "var(--text-3)";
   }
 }
-
 
 const DRAG_ROW_LIMIT = 20000;
 
@@ -60,7 +58,6 @@ export function PreviewTable() {
 
   useEffect(() => {
     preview.invalidate(filters);
-
   }, [summary, filters]);
 
   const items = virtualizer.getVirtualItems();
@@ -68,7 +65,6 @@ export function PreviewTable() {
   useEffect(() => {
     if (items.length === 0) return;
     preview.ensure(items[0].index, items[items.length - 1].index, filters);
-
   }, [items, filters]);
 
   return (
@@ -124,7 +120,6 @@ function Header() {
   const summary = useSessionStore((s) => s.summary);
   const clearExclusions = useSessionStore((s) => s.clearExclusions);
   const filters = { hideUnchanged: settings.hideUnchanged, collisionsFirst: settings.collisionsFirst };
-
 
   const csv = useRef<string | null>(null);
   const [preparing, setPreparing] = useState(false);
@@ -215,7 +210,6 @@ function Header() {
     </div>
   );
 }
-
 
 function ColumnHeader() {
   const { columnSplit, set } = useSettingsStore();
@@ -343,7 +337,6 @@ function PreviewRow({ row, selected, height }: { row: Row; selected: boolean; he
     </div>
   );
 }
-
 
 function NameCell({ spans, side, dim }: { spans: DiffSpan[]; side: "old" | "new"; dim?: boolean }) {
   const visible = sideSpans(spans, side);

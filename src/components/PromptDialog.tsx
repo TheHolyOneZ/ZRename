@@ -14,7 +14,6 @@ interface Props {
   onConfirm: (value: string) => void;
 }
 
-
 export function PromptDialog({
   open, title, label, hint, initial = "", confirmLabel = "Save",
   placeholder, onCancel, onConfirm,

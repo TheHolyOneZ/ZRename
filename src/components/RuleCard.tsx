@@ -1,8 +1,10 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowDown, ArrowUp, Copy, GripVertical, MoreVertical, Trash2 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
-import { RULE_LABELS, isConfigured, scopeLabel, summariseRule } from "../lib/rules";
+import { ArrowDown, ArrowUp, Copy, GripVertical, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  MAX_LABEL, RULE_LABELS, cleanLabel, isConfigured, ruleTitle, scopeLabel, summariseRule,
+} from "../lib/rules";
 import { useRuleStore } from "../store/useRuleStore";
 import type { RuleSpec } from "../types";
 import { Checkbox, Popover } from "./ui";
@@ -18,13 +20,25 @@ export function RuleCard({ rule, position, count, selected }: Props) {
   const {
     attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging,
   } = useSortable({ id: rule.id });
-  const { select, toggle, remove, duplicate, nudge } = useRuleStore();
+  const { select, toggle, remove, duplicate, nudge, update } = useRuleStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const kebabRef = useRef<HTMLButtonElement>(null);
+  const [renaming, setRenaming] = useState(false);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
+  useEffect(() => {
+    const start = (e: Event) => {
+      if ((e as CustomEvent<string>).detail === rule.id) setRenaming(true);
+    };
+    window.addEventListener("zrename:rename-rule", start);
+    return () => window.removeEventListener("zrename:rename-rule", start);
+  }, [rule.id]);
+
   const configured = isConfigured(rule);
+  const title = ruleTitle(rule);
+  const typeLabel = RULE_LABELS[rule.kind];
+  const named = !!rule.label?.trim();
 
   return (
     <div
@@ -34,7 +48,6 @@ export function RuleCard({ rule, position, count, selected }: Props) {
       data-selected={selected}
       data-dragging={isDragging}
       style={{
-
         transform: CSS.Transform.toString(transform),
         transition: transition ?? "transform 160ms cubic-bezier(0.2, 0, 0, 1)",
         zIndex: isDragging ? 10 : undefined,
@@ -62,7 +75,7 @@ export function RuleCard({ rule, position, count, selected }: Props) {
             checked={rule.enabled}
             onChange={() => toggle(rule.id)}
             stopPropagation
-            ariaLabel={`${rule.enabled ? "Disable" : "Enable"} ${RULE_LABELS[rule.kind]}`}
+            ariaLabel={`${rule.enabled ? "Disable" : "Enable"} ${title}`}
           />
         </span>
 
@@ -70,12 +83,37 @@ export function RuleCard({ rule, position, count, selected }: Props) {
           {position}
         </span>
 
-        <span
-          className="text-[12px] font-medium truncate flex-1"
-          style={{ color: rule.enabled ? "var(--text)" : "var(--text-3)" }}
-        >
-          {RULE_LABELS[rule.kind]}
-        </span>
+        {renaming ? (
+          <RenameField
+            initial={rule.label ?? ""}
+            placeholder={typeLabel}
+            onDone={(text) => {
+              setRenaming(false);
+              if (text !== null) update(rule.id, { label: cleanLabel(text) });
+            }}
+          />
+        ) : (
+          <span
+            className="flex items-baseline gap-1.5 min-w-0 flex-1"
+            title={named ? `${title} (${typeLabel}) · double-click or F2 to rename` : "Double-click or F2 to rename"}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setRenaming(true);
+            }}
+          >
+            <span
+              className="text-[12px] font-medium truncate"
+              style={{ color: rule.enabled ? "var(--text)" : "var(--text-3)" }}
+            >
+              {title}
+            </span>
+            {named && (
+              <span className="text-[10px] shrink-0" style={{ color: "var(--text-3)" }}>
+                {typeLabel}
+              </span>
+            )}
+          </span>
+        )}
 
         {!configured && (
           <span className="chip shrink-0" style={{ color: "var(--warn)", borderColor: "var(--warn)" }}>
@@ -98,6 +136,14 @@ export function RuleCard({ rule, position, count, selected }: Props) {
 
           <Popover anchor={kebabRef} open={menuOpen} onDismiss={closeMenu} width={150}>
             <div onClick={(e) => e.stopPropagation()}>
+              <MenuItem
+                icon={<Pencil size={12} />}
+                label="Rename"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setRenaming(true);
+                }}
+              />
               <MenuItem
                 icon={<ArrowUp size={12} />}
                 label="Move up"
@@ -151,6 +197,64 @@ export function RuleCard({ rule, position, count, selected }: Props) {
         )}
       </div>
     </div>
+  );
+}
+
+function RenameField({
+  initial,
+  placeholder,
+  onDone,
+}: {
+  initial: string;
+  placeholder: string;
+
+  onDone: (text: string | null) => void;
+}) {
+  const [text, setText] = useState(initial);
+  const ref = useRef<HTMLInputElement>(null);
+  const done = useRef(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      ref.current?.focus();
+      ref.current?.select();
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  function finish(value: string | null) {
+    if (done.current) return;
+    done.current = true;
+    onDone(value);
+  }
+
+  return (
+    <input
+      ref={ref}
+      className="zr-input text-[12px] font-medium flex-1 min-w-0 !py-0 !px-1.5"
+      value={text}
+      placeholder={placeholder}
+      maxLength={MAX_LABEL}
+      aria-label="Rule name"
+      spellCheck={false}
+      autoComplete="off"
+      onChange={(e) => setText(e.target.value)}
+      onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          finish(text);
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          finish(null);
+        }
+      }}
+      onBlur={() => finish(text)}
+    />
   );
 }
 

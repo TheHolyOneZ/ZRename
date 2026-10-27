@@ -14,7 +14,7 @@ reboot*.
 [![Licence GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-F59E0B?style=for-the-badge)](LICENSE)
 [![Linux and Windows](https://img.shields.io/badge/Linux%20%7C%20Windows-20262E?style=for-the-badge&logo=linux&logoColor=F59E0B)](#install)
 [![Rust and Tauri](https://img.shields.io/badge/Rust%20%2B%20Tauri%20v2-20262E?style=for-the-badge&logo=rust&logoColor=F59E0B)](https://v2.tauri.app)
-[![284 tests](https://img.shields.io/badge/284%20tests-passing-34D399?style=for-the-badge)](#tests)
+[![298 tests](https://img.shields.io/badge/298%20tests-passing-34D399?style=for-the-badge)](#tests)
 
 **[zsync.eu/zrename](https://zsync.eu/zrename/)** — homepage and downloads
 
@@ -261,6 +261,8 @@ untick the copies and leave the first of each group to be renamed.
 
 Every rule can be **scoped** to the name, the extension, or both. Reorder by
 dragging, by <kbd>Alt</kbd> <kbd>↑</kbd>/<kbd>↓</kbd>, or from the card menu.
+Give a rule its own **name** by double-clicking it, pressing <kbd>F2</kbd>, or
+choosing *Rename* from the card menu; the rule type stays visible beside it.
 
 </td><td valign="top" width="33%">
 
@@ -441,6 +443,7 @@ name = "Photos → date-based"
 description = "Names each photo after the day it was taken."
 
 [[rules]]
+label = "Date taken"
 kind = "template"
 template = "%exif:DateTimeOriginal:%Y-%m-%d%"
 
@@ -456,7 +459,9 @@ kind = "extension"
 mode = "lower"
 ```
 
-<kbd>Ctrl</kbd> <kbd>S</kbd> saves the current stack as one.
+<kbd>Ctrl</kbd> <kbd>S</kbd> saves the current stack as one. A rule's custom
+`label` is saved with it and shown in place of the rule type when the preset is
+loaded; leave it out and the rule type is used.
 
 ---
 
@@ -517,7 +522,7 @@ zrename undo 2026-09-04T14-06-08.770                             # or a specific
 | <kbd>Ctrl</kbd> <kbd>Z</kbd> | Undo the last batch | <kbd>Ctrl</kbd> <kbd>N</kbd> | Add a rule |
 | <kbd>Ctrl</kbd> <kbd>F</kbd> | Filter the preview | <kbd>Ctrl</kbd> <kbd>S</kbd> | Save the stack as a preset |
 | <kbd>F5</kbd> | Re-read the folder | <kbd>Delete</kbd> | Remove the selected rule |
-| <kbd>Space</kbd> | Toggle the selected rule | | |
+| <kbd>Space</kbd> | Toggle the selected rule | <kbd>F2</kbd> | Rename the selected rule |
 
 ---
 
@@ -580,9 +585,9 @@ src/                   React 19 frontend
 ### Tests
 
 ```sh
-cargo test --workspace   # 254: rules, token parsing, filesystem profiles, cycle
+cargo test --workspace   # 264: rules, token parsing, filesystem profiles, cycle
                          # detection, journal round-trips, real renames on disk
-pnpm test                # 30: diff rendering, size parsing, rule summaries
+pnpm test                # 34: diff rendering, size parsing, rule summaries and names
 ```
 
 The Windows job in CI runs the same suite on a `windows-latest` runner, so NTFS

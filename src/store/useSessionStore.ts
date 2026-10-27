@@ -46,7 +46,6 @@ interface SessionState {
   dismissConfirmation: () => void;
 }
 
-
 let planTimer: ReturnType<typeof setTimeout> | null = null;
 let planSeq = 0;
 let confirmTimer: ReturnType<typeof setTimeout> | null = null;
@@ -92,7 +91,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         await get().load(args.paths);
         return;
       }
-
 
       if (settings.lastScanOptions) set({ scanOptions: settings.lastScanOptions });
       if (settings.lastPreset && !get().presetName) set({ presetName: settings.lastPreset });
@@ -273,7 +271,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     try {
       set({ history: await api.listHistory() });
     } catch {
-
     }
   },
 

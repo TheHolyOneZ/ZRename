@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-
 const LABEL_LINE = 11.5 * 1.375;
 const TOGGLE_LINE = 12 * 1.375;
 
@@ -128,7 +127,6 @@ export function Select<T extends string>({
 
   useEffect(() => {
     if (open) setActive(Math.max(0, options.findIndex((o) => o.value === value)));
-
   }, [open]);
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -225,7 +223,6 @@ interface ToggleProps {
   ariaLabel?: string;
 }
 
-
 export function Toggle({ checked, onChange, label, hint, ariaLabel }: ToggleProps) {
   return (
     <button
@@ -257,7 +254,6 @@ export function Toggle({ checked, onChange, label, hint, ariaLabel }: ToggleProp
     </button>
   );
 }
-
 
 export function TextField({
   value, onChange, placeholder, mono, width, invalid, id, ariaLabel, type = "text", min, max,
@@ -299,7 +295,6 @@ export function TextField({
   );
 }
 
-
 export function Popover({
   anchor,
   open,
@@ -328,7 +323,6 @@ export function Popover({
     }
     const a = anchor.current.getBoundingClientRect();
 
-
     const wantMin = width === "anchor" ? a.width : undefined;
     if (wantMin !== minWidth) {
       setMinWidth(wantMin);
@@ -353,7 +347,6 @@ export function Popover({
 
     const onPointerDown = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
-
 
       if (menuRef.current?.contains(t) || anchor.current?.contains(t)) return;
       onDismiss();
